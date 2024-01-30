@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: folder_backup
+Version: 0.1.0
+Summary: routine to backup a folder recursively, claculatin md5 hash to verify copies.
+Author-email: Martin Carlos Araya <martinaraya@gmail.com>
+Project-URL: Homepage, https://github.com/ayaranitram/folder_backup
+Project-URL: Bug Tracker, https://github.com/ayaranitram/folder_backup/issues
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+
+# `folder_backup`

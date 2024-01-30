@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/update_MisFotos.py
+src/folder_backup/__init__.py
+src/folder_backup/file_handling.py
+src/folder_backup/md5.py
+src/folder_backup/mirror.py
+src/folder_backup.egg-info/PKG-INFO
+src/folder_backup.egg-info/SOURCES.txt
+src/folder_backup.egg-info/dependency_links.txt
+src/folder_backup.egg-info/top_level.txt
