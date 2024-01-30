@@ -131,6 +131,9 @@ def cp(source, destination, md5=True, source_md5=None, if_exists='both', attempt
 
 
 def mv(source, destination, md5=True, source_md5=None, if_exists='both', attempts=3):
+    if if_exists not in ['stop', 'both', 'overwrite']:
+        raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
+
     if md5 and source_md5 is None:
         source_md5 = get_md5(source)
 
