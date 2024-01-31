@@ -301,6 +301,8 @@ def execute_actions(relative_df, delete: bool=True, md5: bool=True, attempts: in
     if type(relative_df) is str:
         relative_df = relative_df.replace('\\', '/')
         if exists(relative_df):
+            if simulate:
+                raise ValueError(f"When providing report of actions to execute, `simulate` should be False.")
             print(f"reading actions report from the file '{relative_df}'")
             relative_df = pd.read_excel(relative_df)
         else:
