@@ -7,8 +7,10 @@ import numpy as np
 from fnmatch import fnmatch
 from multiprocessing import Pool
 from os.path import exists
+import datetime
 
-__all__ = ['mirror', 'run_backup']
+
+__all__ = ['run_backup', 'mirror', 'make_actions', 'execute_actions']
 
 
 def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jobs=None):
@@ -188,9 +190,9 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
     if report:
         print("writing excel mirror report files")
         xlsx = pd.ExcelWriter(log_file)
-        source_df.to_excel(xlsx, sheet_name='source')
-        destination_df.to_excel(xlsx, sheet_name='destination')
-        relative_df.to_excel(xlsx, sheet_name='relative')
+        source_df.to_excel(xlsx, sheet_name='source', index=False)
+        destination_df.to_excel(xlsx, sheet_name='destination', index=False)
+        relative_df.to_excel(xlsx, sheet_name='relative', index=False)
         xlsx.close()
 
     print("mirror done!")
