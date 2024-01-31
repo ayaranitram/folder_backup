@@ -295,6 +295,17 @@ def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
 
 def execute_actions(relative_df, delete: bool=True, md5: bool=True, attempts: int=3, if_exists: str='both',
                     n_jobs=None, simulate: bool=True):
+    if if_exists not in ['stop', 'both', 'overwrite']:
+        raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
+
+    if type(relative_df) is str:
+        relative_df = relative_df.replace('\\', '/')
+        if exists(relative_df):
+            print(f"reading actions report from the file '{relative_df}'")
+            relative_df = pd.read_excel(relative_df)
+        else:
+            raise ValueError(f"The file '{relative_df}' doesn't exist.")
+
     if delete:
         relative_df = mirror_delete(relative_df, simulate=simulate)
     relative_df = mirror_move(relative_df, md5=md5, attempts=attempts, if_exists=if_exists, n_jobs=n_jobs,
