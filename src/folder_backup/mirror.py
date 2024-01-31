@@ -63,7 +63,7 @@ def calculate_missing_md5(df, path_column, md5_column):
 
 def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=None,
            recursive: bool=True, log_file=None,
-           n_jobs=None):
+           n_jobs=None, *, pass_log_folder: bool=False, report: bool=False):
 
     # check input parameters
     if type(source) is str:
@@ -185,15 +185,18 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
     relative_df['source_root'] = source_root
     relative_df['destination_root'] = destination_root
 
-    print("writing excel files")
-    xlsx = pd.ExcelWriter(log_file)
-    source_df.to_excel(xlsx, sheet_name='source')
-    destination_df.to_excel(xlsx, sheet_name='destination')
-    relative_df.to_excel(xlsx, sheet_name='relative')
-    xlsx.close()
+    if report:
+        print("writing excel mirror report files")
+        xlsx = pd.ExcelWriter(log_file)
+        source_df.to_excel(xlsx, sheet_name='source')
+        destination_df.to_excel(xlsx, sheet_name='destination')
+        relative_df.to_excel(xlsx, sheet_name='relative')
+        xlsx.close()
 
-    print("done!")
+    print("mirror done!")
 
+    if pass_log_folder:
+        return relative_df, extension(log_file)[2]
     return relative_df
 
 def make_actions(relative_df, md5: bool=True, delete: bool=True):
