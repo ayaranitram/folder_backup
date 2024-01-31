@@ -314,16 +314,44 @@ def execute_actions(relative_df, delete: bool=True, md5: bool=True, attempts: in
                               simulate=simulate)
     return relative_df
 
-def run_backup(source, destination, file_pattern: str='*', exclude=None, md5=True,
-               recursive=True, log_file=None,
-               delete=True, attempts=3, if_exists='both', n_jobs=None, simulate=True):
+def run_backup(source, destination, file_pattern: str='*', *, exclude=None, md5: bool=True, if_exists: str='both',
+               recursive: bool=True, log_file=None, delete: bool=True, attempts: int=3, n_jobs: int=None,
+               simulate: bool=True, log_folder: str=None):
+    now = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+    if if_exists not in ['stop', 'both', 'overwrite']:
+        raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
+
+    if log_folder in [False, 'False', 'false', 'FALSE', '0', 0]:
+        pass_log_folder = False
+        log_folder = False
+    elif log_folder is None:
+        pass_log_folder = True
+    elif type(log_folder) is str:
+        log_folder = log_folder.replace('\\', '/')
+        if not exists(log_folder):
+            raise ValueError(f"The log folder '{log_folder}' doesn't exist.")
+        pass_log_folder = False
+    else:
+        raise TypeError("`log_folder` must be a string.")
+
     df = mirror(source, destination, md5=md5, file_pattern=file_pattern, exclude=exclude,
-                recursive=recursive, log_file=log_file,
-                n_jobs=n_jobs)
-    df.to_excel('run_backup_mirror.xlsx')
+                            recursive=recursive, log_file=log_file,
+                            n_jobs=n_jobs, pass_log_folder=pass_log_folder)
+    if pass_log_folder:
+        df, log_folder = df[0], df[1]
+    if log_folder is False:  # is False to be explicit
+        pass
+    else:
+        log_folder = f"{log_folder}{'' if log_folder.endswith('/') else '/'}"
+
+    if bool(log_folder):
+        df.to_excel(f'{log_folder}run_backup_mirror {now}.xlsx', sheet_name=now, index=False)
     mk = make_actions(df, md5=md5, delete=delete)
-    mk.to_excel('run_backup_make.xlsx')
+    if bool(log_folder):
+        mk.to_excel(f'{log_folder}run_backup_make {now}.xlsx', sheet_name=now, index=False)
     ex = execute_actions(mk, delete=delete, md5=md5, attempts=attempts, if_exists=if_exists,
                          n_jobs=n_jobs, simulate=simulate)
-    ex.to_excel('run_backup_execute.xlsx')
+    if bool(log_folder):
+        ex.to_excel(f'{log_folder}run_backup_execute {now}.xlsx', sheet_name=now, index=False)
     return ex
