@@ -238,12 +238,6 @@ def mirror_delete(relative_df, n_jobs=None, simulate: bool=True):
     return relative_df
 
 def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='both', n_jobs=None, simulate: bool=True):
-    to_move = relative_df.loc[relative_df.action == 'move'].index
-    if simulate:
-        relative_df.loc[to_move, 'simulation'] = [f"cp({s.path_destination}, \n{(s['path_destination']).replace(s['relative_destination'], s['relative_source'])}, \nmd5={md5}, source_md5={s['md5']}, attempts={attempts}, if_exists={if_exists},)"
-                                 for s in relative_df.loc[to_move].T]
-        return relative_df
-
     def _mv(s: pd.Series):
         return mv(s.path_destination,
                   (s['path_destination']).replace(s['relative_destination'], s['relative_source']),
@@ -252,6 +246,15 @@ def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
                   attempts=attempts,
                   if_exists=if_exists,
                   )
+    if if_exists not in ['stop', 'both', 'overwrite']:
+        raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
+
+    to_move = relative_df.loc[relative_df.action == 'move'].index
+    if simulate:
+        relative_df.loc[to_move, 'simulation'] = [f"cp({s.path_destination}, \n{(s['path_destination']).replace(s['relative_destination'], s['relative_source'])}, \nmd5={md5}, source_md5={s['md5']}, attempts={attempts}, if_exists={if_exists},)"
+                                 for s in relative_df.loc[to_move].T]
+        return relative_df
+
     with Pool(n_jobs) as pool:
         digest = pool.map(_mv, relative_df.loc[to_move].T)
     relative_df.loc[to_move, 'execution'] = digest
@@ -266,6 +269,9 @@ def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
                   attempts=attempts,
                   if_exists=if_exists,
                   )
+
+    if if_exists not in ['stop', 'both', 'overwrite']:
+        raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
 
     to_copy = relative_df.loc[relative_df.action == 'copy'].index
     if simulate:
