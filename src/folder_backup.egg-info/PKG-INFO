@@ -1,8 +1,30 @@
 Metadata-Version: 2.1
 Name: folder_backup
-Version: 0.1.0
+Version: 0.1.6
 Summary: routine to backup a folder recursively, claculatin md5 hash to verify copies.
 Author-email: Martin Carlos Araya <martinaraya@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2020 Martín Carlos Araya
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
 Project-URL: Homepage, https://github.com/ayaranitram/folder_backup
 Project-URL: Bug Tracker, https://github.com/ayaranitram/folder_backup/issues
 Classifier: Programming Language :: Python :: 3.7
@@ -14,5 +36,23 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
+License-File: LICENSE
 
 # `folder_backup`
+
+Script to back up one or several folders into other folders:
+- replicating the source folders structure
+- not copying files already in destination (better if `md5=True`)
+- moving (not copying) files already present in the destination path (requires `md5=True`)
+- delete (`delete=True`), or not (`delete=False`) files from destination that are not present in source
+- copy new files from source into destination verifying the copy (requires `md5=True`)
+- if a file with the same name (full path) already exists in destination, the parameter `if_exists` choose how to proceed:
+  - **'stop'** will not copy or move the file (skip)
+  - **'both'** will keep both files, adding a numeric suffix to the new file
+  - **'overwrite'** will overwrite the file in destination
+  
+It is possible to prepare a _simulation_ of the actions to be done, using the paramenter `simulate=True`.  
+This mode only create the report in Excel format, that can be reviewed and later excecuted using the function `execute_actions`.
+  
+Further documentation and examples will come later...  
+  
