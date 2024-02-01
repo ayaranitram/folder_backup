@@ -138,29 +138,36 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
         print("calculating missing MD5 hash")
         destination_df['md5'] = calculate_missing_md5(destination_df, 'path', 'md5')
 
-    # find common relative path
-    print(source_df)
-    source_common = source_df.folder.sort_values().values[0]
-    common_relative = '/'.join(source_common.split('/'))
-    i, f = 0, len(source_common.split('/'))
-    while f > i and not np.array([common_relative in each for each in source_df.folder.values]).all():
-        f -= 1
-        common_relative = '/'.join(source_common.split('/')[i:f])
-    source_common = common_relative
-    if f > len(source_common.split('/')):
-        f = len(source_common.split('/'))
-    if log_file is None:
-        log_file = common_relative  # the common folder in the source path
+    # find common relative path, starting from the shortest path
+    source_common = source_df.loc[source_df.folder.str.len().sort_values().index[0]].folder
+    common_relative = source_common[2:] if ':' in source_common[:2] else source_common
 
-    while f > i and not np.array([common_relative in each for each in destination_df.folder.values]).all():
+    i = 0
+    while False in [common_relative.split('/')[i] in each for each in source_df.folder.values]\
+            and i < len(common_relative.split('/')):
         i += 1
-        common_relative = '/'.join(source_common.split('/')[i:f])
+    f = len(common_relative.split('/'))
+    while False in ['/'.join(common_relative.split('/')[i:f]) in each for each in source_df.folder.values]\
+            and f > i:
+        f -= 1
+    common_relative = common_relative[i: f] + '' if common_relative[i: f].endswith('/') else '/'
 
-    if not common_relative.endswith('/'):
-        common_relative += '/'
+    if len(common_relative) > 0 and common_relative in source_common and \
+        exists(source_common[:source_common.index(common_relative) + len(common_relative)]):
+        source_common = source_common[:source_common.index(common_relative) + len(common_relative)]
 
-    destination_common = destination_df.folder.sort_values().values[0]
-    destination_common = destination_common[:destination_common.index(common_relative)+len(common_relative)]
+    if log_file is None:
+        log_file = source_common  # the shortest common folder in the source path
+
+    i, f = 0, len(common_relative)
+    while False in [common_relative in each for each in destination_df.folder.values] and f > i:
+        i += 1
+    common_relative = common_relative[i: f] + '' if common_relative[i: f].endswith('/') else '/'
+
+    destination_common = destination_df.loc[destination_df.folder.str.len().sort_values().index[0]].folder
+    if len(common_relative) > 0 and common_relative in destination_common and \
+            exists(destination_common[:destination_common.index(common_relative) + len(common_relative)]):
+        destination_common = destination_common[:destination_common.index(common_relative)+len(common_relative)]
 
     # write the relative-common path for each file
     source_root = source_common[:source_common.index(common_relative)]
