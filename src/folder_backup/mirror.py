@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from fnmatch import fnmatch
 from multiprocessing import Pool
-from os.path import exists
+from os.path import exists, isdir
 import datetime
 
 
@@ -18,6 +18,8 @@ def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jo
     if type(path) is str:
         path = [path]
     path = [each.replace('\\', '/') for each in path]
+    path = [f"{each}{'' if each.endswith('/') else '/'}{'**/' * recursive}*" if isdir(each) else each
+            for each in path]
     fullpath = [glob(each, recursive=recursive) for each in path]
     fullpath = [filepath for list_of_paths in fullpath for filepath in list_of_paths]
 
