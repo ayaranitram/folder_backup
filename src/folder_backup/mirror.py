@@ -13,7 +13,7 @@ import datetime
 __all__ = ['run_backup', 'mirror', 'make_actions', 'execute_actions']
 
 
-def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jobs=None):
+def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jobs=None, verbose: bool=True):
     print("listing files...")
     if type(path) is str:
         path = [path]
@@ -27,17 +27,20 @@ def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jo
         while len(exclude) > 0:
             pat = exclude.pop()
             fullpath = [each for each in fullpath if not fnmatch(each, pat)]
-    print(f"{len(fullpath)} files listed...")
+    if verbose:
+        print(f"{len(fullpath)} files listed...")
     if len(fullpath) == 0:
         print("no files found in the path:\n" + "\n ".join(fullpath))
 
-    print("getting filename and folder...")
+    if verbose:
+        print("getting filename and folder...")
     filename_folder = [extension(each) for each in fullpath]
     filename = [f"{each[1]}{each[0]}" for each in filename_folder]
     folder = [each[2] for each in filename_folder]
     fullpath = [each[3] for each in filename_folder]
 
-    print("creating dataframe")
+    if verbose:
+        print("creating dataframe")
     df = pd.DataFrame(
         data={'path': fullpath,
               'folder': folder,
@@ -48,16 +51,16 @@ def listing_files(path, md5: bool=True, exclude=None, recursive: bool=True, n_jo
     if md5:
         if n_jobs == 1:
             print("calculating MD5 hash")
-            df['md5'] = [get_md5(each)
+            df['md5'] = [get_md5(each, verbose=verbose)
                          for each in df['path'].values]
         else:
             print("calculating MD5 hash")
-            df['md5'] = multiprocessing_md5(df['path'].to_list(), n_jobs=n_jobs)
+            df['md5'] = multiprocessing_md5(df['path'].to_list(), n_jobs=n_jobs, verbose=verbose)
     return df
 
 
-def calculate_missing_md5(df, path_column, md5_column):
-    return [get_md5(df.loc[i, path_column]).values[0]
+def calculate_missing_md5(df, path_column, md5_column, verbose: bool=True):
+    return [get_md5(df.loc[i, path_column], verbose=verbose).values[0]
             if df.loc[i, md5_column].values[0] is None
             else df.loc[i, md5_column].values[0]
             for i in df.index]
@@ -65,7 +68,7 @@ def calculate_missing_md5(df, path_column, md5_column):
 
 def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=None,
            recursive: bool=True, log_file=None,
-           n_jobs=None, *, pass_log_folder: bool=False, report: bool=False):
+           n_jobs=None, *, pass_log_folder: bool=False, report: bool=False, verbose: bool=True):
 
     # check input parameters
     if type(source) is str:
@@ -119,8 +122,7 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
     # list files if needed
     if not isinstance(source, pd.DataFrame):
         print("extracting data from SOURCE")
-        source_df = listing_files(source, md5=md5, exclude=exclude, recursive=recursive,
-                                  n_jobs=n_jobs)
+        source_df = listing_files(source, md5=md5, exclude=exclude, recursive=recursive, n_jobs=n_jobs)
 
     if md5 and source_df['md5'].isna().sum() > 0:
         print("calculating missing MD5 hash")
@@ -128,8 +130,7 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
 
     if not isinstance(destination, pd.DataFrame):
         print("extracting data from DESTINATION")
-        destination_df = listing_files(destination, md5=md5, exclude=exclude, recursive=recursive,
-                                       n_jobs=n_jobs)
+        destination_df = listing_files(destination, md5=md5, exclude=exclude, recursive=recursive, n_jobs=n_jobs)
 
     if md5 and destination_df['md5'].isna().sum() > 0:
         print("calculating missing MD5 hash")
@@ -201,7 +202,7 @@ def mirror(source, destination, md5: bool=True, file_pattern: str='*', exclude=N
         return relative_df, extension(log_file)[2]
     return relative_df
 
-def make_actions(relative_df, md5: bool=True, delete: bool=True):
+def make_actions(relative_df, md5: bool=True, delete: bool=True, verbose: bool=True):
     # files and folders already in destination
     to_ignore = relative_df.md5.notna() & \
                 (relative_df.relative_source == relative_df.relative_destination)
@@ -227,8 +228,9 @@ def make_actions(relative_df, md5: bool=True, delete: bool=True):
 
     return relative_df
 
-def mirror_delete(relative_df, n_jobs=None, simulate: bool=True):
+def mirror_delete(relative_df, n_jobs=None, simulate: bool=True, verbose: bool=True):
     to_delete = relative_df.loc[relative_df.action == 'delete'].index
+    print(f"{len(to_delete)} files to delete.")
     if simulate:
         relative_df.loc[to_delete, 'simulation'] = [
             f"rm({each})" for each in relative_df.loc[to_delete].path_destination.to_list()]
@@ -239,7 +241,8 @@ def mirror_delete(relative_df, n_jobs=None, simulate: bool=True):
     relative_df.loc[to_delete, 'execution'] = digest
     return relative_df
 
-def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='both', n_jobs=None, simulate: bool=True):
+def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='both', n_jobs=None, simulate: bool=True,
+                verbose: bool=True):
     def _mv(s: pd.Series):
         return mv(s.path_destination,
                   (s['path_destination']).replace(s['relative_destination'], s['relative_source']),
@@ -252,6 +255,7 @@ def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
         raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
 
     to_move = relative_df.loc[relative_df.action == 'move'].index
+    print(f"{len(to_move)} files to move.")
     if simulate:
         relative_df.loc[to_move, 'simulation'] = [f"cp({s.path_destination}, \n{(s['path_destination']).replace(s['relative_destination'], s['relative_source'])}, \nmd5={md5}, source_md5={s['md5']}, attempts={attempts}, if_exists={if_exists},)"
                                  for s in relative_df.loc[to_move].T]
@@ -262,7 +266,8 @@ def mirror_move(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
     relative_df.loc[to_move, 'execution'] = digest
     return relative_df
 
-def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='both', n_jobs=None, simulate: bool=True):
+def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='both', n_jobs=None,
+                simulate: bool=True, verbose: bool=True):
     def _cp(s_: pd.Series):
         return cp(s_.path_destination,
                   f"{s_['destination_root']}{s_['relative_source']}",
@@ -276,6 +281,7 @@ def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
         raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
 
     to_copy = relative_df.loc[relative_df.action == 'copy'].index
+    print(f"{len(to_copy)} files to copy.")
     if simulate:
         if len(to_copy) == 1:
             s = relative_df.loc[to_copy].T
@@ -296,7 +302,7 @@ def mirror_copy(relative_df, md5: bool=True, attempts: int=3, if_exists: str='bo
     return relative_df
 
 def execute_actions(relative_df, delete: bool=True, md5: bool=True, attempts: int=3, if_exists: str='both',
-                    n_jobs=None, simulate: bool=True):
+                    n_jobs=None, simulate: bool=True, verbose: bool=True):
     if if_exists not in ['stop', 'both', 'overwrite']:
         raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
 
@@ -320,7 +326,7 @@ def execute_actions(relative_df, delete: bool=True, md5: bool=True, attempts: in
 
 def run_backup(source, destination, file_pattern: str='*', *, exclude=None, md5: bool=True, if_exists: str='both',
                recursive: bool=True, log_file=None, delete: bool=True, attempts: int=3, n_jobs: int=None,
-               simulate: bool=True, log_folder: str=None):
+               simulate: bool=True, log_folder: str=None, verbose: bool=True):
     now = datetime.datetime.now().strftime("%Y%m%d_%H%M")
 
     if if_exists not in ['stop', 'both', 'overwrite']:
@@ -340,8 +346,8 @@ def run_backup(source, destination, file_pattern: str='*', *, exclude=None, md5:
         raise TypeError("`log_folder` must be a string.")
 
     df = mirror(source, destination, md5=md5, file_pattern=file_pattern, exclude=exclude,
-                            recursive=recursive, log_file=log_file,
-                            n_jobs=n_jobs, pass_log_folder=pass_log_folder)
+                recursive=recursive, log_file=log_file,
+                n_jobs=n_jobs, pass_log_folder=pass_log_folder, verbose=verbose)
     if pass_log_folder:
         df, log_folder = df[0], df[1]
     if log_folder is False:  # is False to be explicit
@@ -351,11 +357,11 @@ def run_backup(source, destination, file_pattern: str='*', *, exclude=None, md5:
 
     if bool(log_folder):
         df.to_excel(f'{log_folder}run_backup_mirror {now}.xlsx', sheet_name=now, index=False)
-    mk = make_actions(df, md5=md5, delete=delete)
+    mk = make_actions(df, md5=md5, delete=delete, verbose=verbose)
     if bool(log_folder):
         mk.to_excel(f'{log_folder}run_backup_make {now}.xlsx', sheet_name=now, index=False)
     ex = execute_actions(mk, delete=delete, md5=md5, attempts=attempts, if_exists=if_exists,
-                         n_jobs=n_jobs, simulate=simulate)
+                         n_jobs=n_jobs, simulate=simulate, verbose=verbose)
     if bool(log_folder):
         ex.to_excel(f'{log_folder}run_backup_execute {now}.xlsx', sheet_name=now, index=False)
     return ex
