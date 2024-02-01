@@ -20,7 +20,7 @@ def copy3(src, dst, *, follow_symlinks=True):
     """
     Wrapper of the Python shutil.copy2() but copy3() will create any folder required to copy the file.
 
-    *The follwing lines are taken and modified from shutil.copy() and shutil.copy2():*
+    *The following lines are taken and modified from shutil.copy() and shutil.copy2():*
 
     Copies the file src to the file or directory dst. src and dst should be path-like objects or strings. If dst specifies a directory, the file will be copied into dst using the base filename from src. If dst specifies a file that already exists, it will be replaced. Returns the path to the newly created file.
     If follow_symlinks is false, and src is a symbolic link, dst will be created as a symbolic link. If follow_symlinks is true and src is a symbolic link, dst will be a copy of the file src refers to.
