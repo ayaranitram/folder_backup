@@ -10,9 +10,12 @@ Script to back up one or several folders into other folders:
   - **'stop'** will not copy or move the file (skip)
   - **'both'** will keep both files, adding a numeric suffix to the new file
   - **'overwrite'** will overwrite the file in destination
+
+To save time calculating MD5 checksum everytime, setting the parameter `recall_md5=True` will write an accompanying _.md5_ file for each read file.
+Next time the script will run, the md5 will be recovered from the _.md5_ file instead of recalculating at every run of the script.
   
-It is possible to prepare a _simulation_ of the actions to be done, using the paramenter `simulate=True`.  
-This mode only create the report in Excel format, that can be reviewed and later excecuted using the function `execute_actions`.
+It is possible to prepare a _simulation_ of the actions to be done, using the parameter `simulate=True`.  
+This mode only create the report in Excel format, that can be reviewed and later executed using the function `execute_actions`.
   
 Further documentation and examples will come later...  
   

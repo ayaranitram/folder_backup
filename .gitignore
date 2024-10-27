@@ -1,3 +1,4 @@
 ﻿src/folder_backup/__pycache__
 *.xlsx
 dist
+src/__pycache__
