@@ -1,4 +1,4 @@
-from os.path import isfile, exists
+from os.path import isfile, exists, isdir
 from os import remove, rename, makedirs, rmdir, removedirs, listdir
 from shutil import copy2
 from stringthings import extension
@@ -32,6 +32,8 @@ def copy3(src, dst, *, follow_symlinks=True):
 
 
 def rm(path, attempts=3):
+    if isdir(path):
+        return f"{path} is folder, not deleted"
     i = 0
     while exists(path) and i < attempts:
         remove(path)
@@ -130,7 +132,7 @@ def cp(source, destination, md5=True, source_md5=None, if_exists='both', attempt
     return _return()
 
 
-def mv(source, destination, md5=True, source_md5=None, if_exists='both', attempts=3):
+def mv(source, destination, md5=True, source_md5=None, if_exists='both', attempts:int=3):
     if if_exists not in ['stop', 'both', 'overwrite']:
         raise ValueError(f"`if_exists` must one of the strings: 'stop', 'both' or 'overwrite', not {if_exists}.")
 
